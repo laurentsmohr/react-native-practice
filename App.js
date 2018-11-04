@@ -1,49 +1,81 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- * @flow
- */
+import React from 'react';
+import { DrawerItems, createBottomTabNavigator, createAppContainer, createStackNavigator, createSwitchNavigator, createDrawerNavigator } from 'react-navigation'
+import { Home } from './src/screens/Home/Home'
+import { SharePlaceScreen as SharePlace }  from './src/screens/SharePlace/SharePlace'
+import { AuthLoadingScreen } from './src/screens/AuthLoading/AuthLoading'
+import { Auth } from './src/screens/Auth/Auth'
+import { SafeAreaView, TouchableOpacity, Text } from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
 
-import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+const HomeStack = createStackNavigator({
+  Home
+})
 
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
+const ShareStack = createStackNavigator({
+  Share: SharePlace
+})
 
-type Props = {};
-export default class App extends Component<Props> {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>Welcome to React Native!</Text>
-        <Text style={styles.instructions}>To get started, edit App.js</Text>
-        <Text style={styles.instructions}>{instructions}</Text>
-      </View>
-    );
+const AppStack = createBottomTabNavigator(
+  {
+    Home: HomeStack,
+    Share: ShareStack
+  },
+  {
+    defaultNavigationOptions: ({navigation}) => ({
+      tabBarIcon: ({focused, horizontal, tintColor}) => {
+        const { routeName } = navigation.state;
+        let iconName;
+        if (routeName === 'Home') {
+          iconName = `ios-information-circle${focused ? '' : '-outline'}`
+        } else if (routeName === 'Share') {
+          iconName = 'ios-share'
+        }
+        
+        return <Icon name={iconName} size={horizontal ? 20 : 25} color={tintColor} />
+      }
+    }),
+    tabBarOptions: {
+      activeTintColor: 'green',
+      inactiveTintColor: 'gray'
+    },
   }
-}
+)
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
+const AuthStack = createStackNavigator({ 
+  SignIn: Auth
 });
+
+const Drawer = createDrawerNavigator(
+  {
+    'Go back': {
+      screen: AppStack,
+    },
+  },
+  {
+    contentComponent:(props) => (
+          <SafeAreaView style={{flex:1}} forceInset={{ top: 'always', horizontal: 'never' }}>
+            <DrawerItems {...props} />
+            <TouchableOpacity onPress={()=>{
+              // Asyncstorage.clear();
+              props.navigation.navigate('Auth')
+            }}>
+              <Text style={{margin: 16, fontWeight: 'bold', color: 'black'}}>Logout</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+    ),
+    drawerOpenRoute: 'DrawerOpen',
+    drawerCloseRoute: 'DrawerClose',
+    drawerToggleRoute: 'DrawerToggle'
+  }
+)
+
+export default createAppContainer(createSwitchNavigator(
+  {
+    AuthLoading: AuthLoadingScreen,
+    App: Drawer,
+    Auth: AuthStack,
+  },
+  {
+    initialRouteName: 'AuthLoading',
+  }
+));
